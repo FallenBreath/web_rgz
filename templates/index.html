@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+    <a href="/upload/">Загрузить модель</a>
+<hr>
+<head>     
+    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Хранилище</title>
+</head>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module" src="{% static 'gallery/viewer.js' %}"></script>
+
+<script type="module" src="{% static 'gallery/viewer.js' %}"></script>
+
+<body>
+    <h1>3D Хранилище моделей</h1>
+
+    <a href="/upload/">Загрузить модель</a>
+    <hr>
+
+    <div class="gallery">
+        {% for asset in assets %}
+            <div class="card">
+                <div class="card-title">{{ asset.title }}</div>
+
+                <div class="card-preview"
+                    id="model-container-{{ asset.id }}"
+                    data-url="{{ asset.file.url }}">
+                    🎲
+                </div>
+
+                <div>
+                    {{ asset.created_at|date:"d.m.Y H:i" }}
+                </div>
+
+                <div>
+                    <a href="{{ asset.file.url }}" target="_blank">Скачать</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
