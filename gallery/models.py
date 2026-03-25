@@ -9,6 +9,14 @@ class Asset(models.Model):
     def __str__(self):
         return self.title
 
+    def get_file_extension(self):
+        return self.file.name.split('.')[-1].lower()
+
+    def get_file_size_mb(self):
+        if self.file and hasattr(self.file, 'size'):
+            return round(self.file.size / (1024 * 1024), 2)
+        return 0
+
     class Meta:
         verbose_name = '3D-модель'
         verbose_name_plural = '3D-модели'

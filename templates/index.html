@@ -1,54 +1,118 @@
-{% load static %}
+{% load static custom_filters %}
 <!DOCTYPE html>
 <html lang="ru">
-    <a href="/upload/">Загрузить модель</a>
-<hr>
-<head>     
-    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Хранилище</title>
+    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
 </head>
-
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
-
-<script type="module" src="{% static 'gallery/viewer.js' %}"></script>
-
-<script type="module" src="{% static 'gallery/viewer.js' %}"></script>
-
 <body>
-    <h1>3D Хранилище моделей</h1>
+    <header class="site-header">
+        <div class="header-left">
+            <h1 class="site-title">3D Хранилище моделей</h1>
+            <p class="site-subtitle">Галерея, просмотр и хранение 3D-моделей</p>
+        </div>
 
-    <a href="/upload/">Загрузить модель</a>
-    <hr>
+        <div class="header-actions">
+            <button id="theme-toggle" class="secondary-button" type="button">Тёмная тема</button>
+            <a class="primary-button" href="/upload/">Загрузить модель</a>
+        </div>
+    </header>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="get" class="filter-form">
+        <input
+            type="text"
+            name="q"
+            placeholder="Поиск по названию..."
+            value="{{ search_query }}"
+        >
+
+        <select name="sort">
+            <option value="new" {% if sort_option == 'new' %}selected{% endif %}>Сначала новые</option>
+            <option value="old" {% if sort_option == 'old' %}selected{% endif %}>Сначала старые</option>
+            <option value="name" {% if sort_option == 'name' %}selected{% endif %}>По названию</option>
+        </select>
+
+        <select name="type">
+            <option value="all" {% if type_filter == 'all' %}selected{% endif %}>Все форматы</option>
+            <option value="glb" {% if type_filter == 'glb' %}selected{% endif %}>GLB</option>
+            <option value="gltf" {% if type_filter == 'gltf' %}selected{% endif %}>GLTF</option>
+        </select>
+
+        <button type="submit">Применить</button>
+        <a href="/" class="secondary-button">Сбросить</a>
+    </form>
 
     <div class="gallery">
         {% for asset in assets %}
             <div class="card">
-                <div class="card-title">{{ asset.title }}</div>
+                <div class="card-title">{{ asset.title|highlight:search_query }}</div>
 
                 <div class="card-preview"
-                    id="model-container-{{ asset.id }}"
-                    data-url="{{ asset.file.url }}">
-                    🎲
+                     id="model-container-{{ asset.id }}"
+                     data-url="{{ asset.file.url }}">
+                    <button class="preview-button">Открыть 3D</button>
                 </div>
 
-                <div>
+                <div class="card-date">
                     {{ asset.created_at|date:"d.m.Y H:i" }}
+                </div>
+
+                <div class="card-date">
+                    Формат: {{ asset.get_file_extension|upper }} · {{ asset.get_file_size_mb }} MB
                 </div>
 
                 <div>
                     <a href="{{ asset.file.url }}" target="_blank">Скачать</a>
                 </div>
+
+                <div style="margin-top: 10px;">
+                    <a href="{% url 'asset_detail' asset.id %}">Открыть страницу модели</a>
+                </div>
+                
             </div>
+        {% empty %}
+            <p>По вашему запросу ничего не найдено.</p>
         {% endfor %}
     </div>
+
+   <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&q={{ search_query }}&sort={{ sort_option }}&type={{ type_filter }}">Первая</a>
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&sort={{ sort_option }}&type={{ type_filter }}">← Назад</a>
+        {% endif %}
+
+        <span>
+            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&sort={{ sort_option }}&type={{ type_filter }}">Вперёд →</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&q={{ search_query }}&sort={{ sort_option }}&type={{ type_filter }}">Последняя</a>
+        {% endif %}
+    </div>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+
+    <script type="module" src="{% static 'gallery/viewer.js' %}"></script>
+    <script src="{% static 'gallery/theme.js' %}"></script>
 </body>
 </html>

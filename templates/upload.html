@@ -1,20 +1,33 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Загрузка модели</title>
+    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
 </head>
-<body>
-    <h1>Загрузить 3D модель</h1>
+<body class="upload-page">
+    <div class="upload-wrapper">
+        <h1 class="upload-title">Загрузить 3D модель</h1>
+        <p class="upload-subtitle">Добавьте новую .glb или .gltf модель в галерею</p>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
+        <div id="drop-zone" class="drop-zone">
+            Перетащите файл сюда или выберите его через форму ниже
+        </div>
 
-        <button type="submit">Загрузить</button>
-    </form>
+        <form method="post" enctype="multipart/form-data" class="upload-form">
+            {% csrf_token %}
+            {{ form.as_p }}
 
-    <br>
-    <a href="/">← Назад</a>
+            <div class="upload-actions">
+                <button class="primary-button" type="submit">Загрузить</button>
+                <a class="secondary-button" href="/">Назад к галерее</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="{% static 'gallery/upload.js' %}"></script>
+    <script src="{% static 'gallery/theme.js' %}"></script>
 </body>
 </html>

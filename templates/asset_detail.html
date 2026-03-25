@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ asset.title }}</title>
+    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-left">
+            <h1 class="site-title">{{ asset.title }}</h1>
+            <p class="site-subtitle">
+                Формат: {{ asset.get_file_extension|upper }} · {{ asset.get_file_size_mb }} MB
+            </p>
+        </div>
+
+        <div class="header-actions">
+            <a class="secondary-button" href="/">Назад к галерее</a>
+            <a class="primary-button" href="{{ asset.file.url }}" target="_blank">Скачать</a>
+        </div>
+    </header>
+
+    <div class="detail-viewer-wrapper">
+        <div class="detail-viewer"
+             id="detail-model-container"
+             data-url="{{ asset.file.url }}">
+            <button class="preview-button">Открыть 3D</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+
+    <script type="module" src="{% static 'gallery/viewer.js' %}"></script>
+    <script src="{% static 'gallery/theme.js' %}"></script>
+</body>
+</html>

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+
 function initViewer(container) {
     const modelUrl = container.dataset.url;
     if (!modelUrl) return;
@@ -16,9 +17,10 @@ function initViewer(container) {
         1000
     );
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
@@ -30,12 +32,16 @@ function initViewer(container) {
     controls.minDistance = 0.5;
     controls.maxDistance = 50;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.2);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-    directionalLight.position.set(3, 3, 3);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    directionalLight.position.set(3, 4, 5);
     scene.add(directionalLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    fillLight.position.set(-3, 2, -2);
+    scene.add(fillLight);
 
     const loader = new GLTFLoader();
 
@@ -45,7 +51,14 @@ function initViewer(container) {
             const model = gltf.scene;
             scene.add(model);
 
-            centerModel(model, camera);
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = false;
+                    child.receiveShadow = false;
+                }
+            });
+
+            centerModel(model, camera, controls);
             animate();
         },
         undefined,
@@ -56,13 +69,22 @@ function initViewer(container) {
     );
 
     function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-}
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    });
 }
 
-function centerModel(model, camera) {
+function centerModel(model, camera, controls) {
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
@@ -72,16 +94,36 @@ function centerModel(model, camera) {
     model.position.z -= center.z;
 
     const maxDim = Math.max(size.x, size.y, size.z);
-    const fov = camera.fov * (Math.PI / 180);
-    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
 
-    cameraZ *= 1.8;
-    camera.position.set(0, 0, cameraZ);
+    const fov = camera.fov * (Math.PI / 180);
+    let cameraDistance = (maxDim / 2) / Math.tan(fov / 2);
+
+    cameraDistance *= 1.6;
+
+    camera.near = Math.max(maxDim / 100, 0.01);
+    camera.far = maxDim * 100;
+    camera.updateProjectionMatrix();
+
+    camera.position.set(
+        maxDim * 0.4,
+        maxDim * 0.3,
+        cameraDistance
+    );
 
     camera.lookAt(0, 0, 0);
-    camera.updateProjectionMatrix();
+
+    controls.target.set(0, 0, 0);
+    controls.minDistance = maxDim * 0.3;
+    controls.maxDistance = maxDim * 10;
+    controls.update();
 }
 
-document.querySelectorAll('[id^="model-container-"]').forEach(container => {
-    initViewer(container);
+document.querySelectorAll('.card-preview, .detail-viewer').forEach(container => {
+    const button = container.querySelector('.preview-button');
+
+    if (button) {
+        button.addEventListener('click', () => {
+            initViewer(container);
+        });
+    }
 });
